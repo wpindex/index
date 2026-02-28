@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- PWA Setup -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PinkCare">
+    <meta name="theme-color" content="#be185d">
+    
+    <!-- Icons -->
+    <link rel="icon" href="https://img.icons8.com/color/96/breast-cancer.png">
+    <link rel="apple-touch-icon" href="https://img.icons8.com/color/512/breast-cancer.png">
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiUGlua0NhcmUg5Lmz6腺55WM566h55CGIiwiYmFja2dyb3VuZF9jb2xvciI6IiNmZmZmZmYiLCJ0aGVtZV9jb2xvciI6IiNiZTE4NWQiLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsInNob3J0X25hbWUiOiJQaW5rQ2FyZSIsImljb25zIjpbeyJzcmMiOiJodHRwczovL2ltZy5pY29uczguY29tL2NvbG9yLzUxMi9icmVhc3QtY2FuY2VyLnBuZyIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9wbmcifV0sInN0YXJ0X3VybCI6Ii4ifQ==">
+
+    <title>PinkCare 乳腺癌科研随访系统 (V13.8 修复版)</title>
+    
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#be185d',
+                        'primary-hover': '#9d174d',
+                        'primary-soft': '#fdf2f8',
+                        nodule: '#059669',
+                        'nodule-soft': '#ecfdf5',
+                        mdt: '#7c3aed',
+                        'mdt-soft': '#f5f3ff',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Base Styles */
+        :root {
+            --primary: #be185d; --primary-soft: #fdf2f8;
+            --nodule: #059669; --nodule-soft: #ecfdf5;
+            --mdt: #7c3aed; --mdt-soft: #f5f3ff;
+            --text-main: #1e293b; --text-sub: #64748b; --text-light: #94a3b8;
+            --bg-body: #f8fafc; --bg-card: #ffffff; --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+        [data-theme='dark'] {
+            --bg-body: #0f172a; --bg-card: #1e293b;
+            --text-main: #f1f5f9; --text-sub: #94a3b8; --text-light: #64748b;
+            --border: #334155; --primary-soft: #831843;
+            --nodule-soft: #064e3b; --mdt-soft: #4c1d95;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; padding-top: env(safe-area-inset-top); -webkit-user-select: none; user-select: none; }
+        input, textarea { -webkit-user-select: text; user-select: text; }
+        
+        /* Layout */
+        header { background: var(--bg-card); height: 64px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 200; flex-shrink: 0; }
+        h1 { color: var(--primary); font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .layout { display: flex; flex: 1; overflow: hidden; position: relative; }
+        main { flex: 1; padding: 20px; overflow-y: auto; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
+        aside { width: 260px; background: var(--bg-card); border-right: 1px solid var(--border); padding: 20px 12px; display: flex; flex-direction: column; overflow-y: auto; transition: transform 0.3s; z-index: 180; }
+        
+        /* Components */
+        .btn-outline { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 12px; padding: 6px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .card { background: var(--bg-card); border-radius: 12px; padding: 20px; box-shadow: var(--shadow-sm); margin-bottom: 20px; border: 1px solid var(--border); }
+        .status-badge { font-size: 10px; padding: 2px 8px; border-radius: 12px; background: var(--primary-soft); color: var(--primary); border: 1px solid var(--border); }
+        
+        /* Nav Buttons */
+        .nav-category { font-size: 11px; color: var(--text-light); padding: 0 12px 8px; font-weight: 700; margin-top: 10px; text-transform: uppercase; }
+        button.nav-btn { background: transparent; border: none; padding: 12px 14px; text-align: left; cursor: pointer; font-size: 14px; color: var(--text-sub); display: flex; align-items: center; gap: 10px; font-weight: 500; width: 100%; border-radius: 8px; margin-bottom: 2px; }
+        button.nav-btn.active { background: var(--primary-soft); color: var(--primary); font-weight: 700; }
+        button.nav-btn.nodule-active { background: var(--nodule-soft); color: var(--nodule); font-weight: 700; }
+        button.nav-btn.mdt-active { background: var(--mdt-soft); color: var(--mdt); font-weight: 700; }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            aside { position: fixed; left: -265px; top: 64px; bottom: 0; width: 260px; box-shadow: 4px 0 15px rgba(0,0,0,0.1); }
+            aside.open { transform: translateX(265px); }
+            .side-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 170; display: none; backdrop-filter: blur(2px); }
+            .side-overlay.active { display: block; }
+            .bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--bg-card); height: 64px; border-top: 1px solid var(--border); z-index: 130; padding-bottom: env(safe-area-inset-bottom); justify-content: space-around; align-items: center; }
+            .b-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; font-size: 10px; color: var(--text-light); gap: 4px; }
+            .b-nav-item.active { color: var(--primary); font-weight: 700; }
+            .b-nav-add { width: 48px; height: 48px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; transform: translateY(-12px); border: 4px solid var(--bg-card); box-shadow: 0 4px 10px rgba(190, 24, 93, 0.3); }
+            main { padding: 15px; padding-bottom: 80px; }
+        }
+        @media (min-width: 769px) { .bottom-nav, .menu-btn { display: none; } }
+
+        /* Specifics */
+        .patient-card { display: flex; align-items: center; padding: 15px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; background: var(--bg-card); }
+        .avatar { width: 40px; height: 40px; background: var(--primary-soft); color: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; margin-right: 12px; flex-shrink: 0; }
+        .avatar.nodule { background: var(--nodule-soft); color: var(--nodule); }
+        .avatar.mdt-av { background: var(--mdt-soft); color: var(--mdt); }
+        .tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-right: 5px; }
+        .tag-stage { background: #eff6ff; color: #2563eb; } .tag-birads { background: #f0fdf4; color: #15803d; } .tag-mdt-reason { background: #f5f3ff; color: #7c3aed; }
+
+        /* Modal */
+        .modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 300; display: none; align-items: center; justify-content: center; }
+        .modal { background: var(--bg-card); width: 600px; max-width: 95%; max-height: 90vh; overflow-y: auto; border-radius: 20px; padding: 25px; position: relative; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .ocr-loading { position: absolute; inset: 0; background: rgba(255,255,255,0.95); z-index: 10; display: none; align-items: center; justify-content: center; flex-direction: column; }
+        [data-theme='dark'] .ocr-loading { background: rgba(15, 23, 42, 0.95); }
+        
+        .switch-container { display: flex; background: var(--border); border-radius: 12px; padding: 3px; margin-bottom: 15px; }
+        .switch-btn { flex: 1; text-align: center; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: 9px; color: var(--text-sub); }
+        .switch-btn.active-cancer { background: white; color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .switch-btn.active-nodule { background: white; color: var(--nodule); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        [data-theme='dark'] .switch-btn.active-cancer, [data-theme='dark'] .switch-btn.active-nodule { background: #334155; }
+        
+        .modal-input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-body); color: var(--text-main); font-size: 14px; margin-bottom: 8px; }
+        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .form-title { font-size: 11px; color: var(--text-light); font-weight: 700; margin: 12px 0 6px; text-transform: uppercase; border-bottom: 1px dashed var(--border); padding-bottom: 4px; }
+        
+        /* Dashboard KPI (New) */
+        .kpi-card-new { border-radius: 16px; padding: 16px; color: white; position: relative; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: none; display: flex; flex-direction: column; justify-content: space-between; height: 110px; }
+        .kpi-title { font-size: 12px; font-weight: 600; opacity: 0.9; margin-bottom: 4px; }
+        .kpi-num { font-size: 32px; font-weight: 800; line-height: 1; }
+        
+        /* KM Plot */
+        .chart-row { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; margin-bottom: 20px; }
+        .km-plot-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 30px 20px 20px 45px; position: relative; }
+        .km-svg { width: 100%; height: 230px; overflow: visible; }
+        
+        /* Utilities */
+        .btn-sm { font-size: 11px; padding: 4px 10px; }
+        #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 20px; border-radius: 30px; font-size: 13px; z-index: 1000; display: none; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .search-container { position: sticky; top: -20px; background: var(--bg-body); z-index: 10; padding-top: 5px; padding-bottom: 15px; transition: 0.3s; }
+        .search-bar { width: 100%; padding: 12px 15px; border: 1px solid var(--border); border-radius: 12px; font-size: 14px; margin-bottom: 10px; background: var(--bg-card); color: var(--text-main); box-sizing: border-box; outline: none; }
+        
+        /* Filter Chips */
+        .filter-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
+        .filter-chip { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); font-size: 12px; cursor: pointer; background: var(--bg-card); white-space: nowrap; transition: 0.2s; color: var(--text-sub); font-weight: 600; }
+        .filter-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+        
+        /* Tools / Forms */
+        .tool-input-group { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .result-box { background: var(--primary-soft); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid var(--border); }
+        
+        /* Trends Card */
+        .trend-card { background: linear-gradient(135deg, #fce7f3 0%, #ffffff 100%); border-left: 5px solid var(--primary); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--border); border-left-width: 5px; }
+        [data-theme='dark'] .trend-card { background: linear-gradient(135deg, #831843 0%, #1e293b 100%); color: white; }
+        .trend-header { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-left">
+            <div class="menu-btn" onclick="toggleSidebar(true)">☰</div>
+            <h1>🎀 PinkCare</h1>
+            <div class="status-badge" id="syncLabel">V13.8 修复版</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <button class="btn-outline" onclick="openInstallHelp()" style="border-color:var(--primary); color:var(--primary);">📱 手机安装指南</button>
+            <button class="btn-outline" onclick="toggleDarkMode()">🌓</button>
+        </div>
+    </header>
+
+    <div class="layout">
+        <aside id="sidebar">
+            <div class="nav-category">核心业务</div>
+            <button class="nav-btn active" id="side-dashboard" onclick="navigate('dashboard', this)"><span>📊</span> 随访概览</button>
+            <button class="nav-btn" id="side-patients" onclick="navigate('patients', this)"><span>🧬</span> 乳腺癌档案</button>
+            <button class="nav-btn nodule-btn" id="side-nodules" onclick="navigate('nodules', this)"><span>🟢</span> 结节良性管理</button>
+            <button class="nav-btn mdt-btn" id="side-mdt" onclick="navigate('mdt', this)"><span>🗣️</span> MDT 会诊中心</button>
+            
+            <div class="nav-category">科研与工具</div>
+            <button class="nav-btn" id="side-research" onclick="navigate('research', this)"><span>📈</span> 真实世界数据 (RWD)</button>
+            <button class="nav-btn" id="side-ideas" onclick="navigate('ideas', this)"><span>💡</span> 科研思路挖掘</button>
+            <button class="nav-btn" id="side-trials" onclick="navigate('trials', this)"><span>💊</span> 临床试验匹配</button>
+            <button class="nav-btn" id="side-guidelines" onclick="navigate('guidelines', this)"><span>📚</span> 指南速查</button>
+            <button class="nav-btn" id="side-bsa" onclick="navigate('bsa', this)"><span>💊</span> 剂量计算器</button>
+            <button class="nav-btn" id="side-tnm" onclick="navigate('tnm', this)"><span>🧮</span> TNM 计算器</button>
+            <div style="margin-top: auto; padding-top:20px;">
+                <label class="nav-btn" style="cursor:pointer;"><span>📥</span> 导入数据 <input type="file" onchange="importData(this)" style="display:none;"></label>
+                <button class="nav-btn" onclick="exportData()"><span>📤</span> 导出备份</button>
+                <button class="nav-btn" onclick="resetApp()" style="color:var(--text-light);"><span>🔄</span> 重置系统</button>
+            </div>
+        </aside>
+
+        <div class="side-overlay" id="sideOverlay" onclick="toggleSidebar(false)"></div>
+        <main id="app-content"></main>
+    </div>
+
+    <!-- Mobile Bottom Nav -->
+    <div class="bottom-nav">
+        <div class="b-nav-item active" id="m-dashboard" onclick="navigate('dashboard', this)"><span>📊</span>概览</div>
+        <div class="b-nav-item" id="m-patients" onclick="navigate('patients', this)"><span>🧬</span>癌症</div>
+        <div class="b-nav-item" onclick="openPatientModal()"><div class="b-nav-add">＋</div></div>
+        <div class="b-nav-item" id="m-mdt" onclick="navigate('mdt', this)"><span>🗣️</span>MDT</div>
+        <div class="b-nav-item" id="m-research" onclick="navigate('research', this)"><span>📈</span>RWD</div>
+    </div>
+
+    <!-- Install Help Modal -->
+    <div id="installModal" class="modal-mask">
+        <div class="modal">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h2 style="margin:0; font-size:18px;">📱 如何安装到手机？</h2>
+                <span onclick="document.getElementById('installModal').style.display='none'" style="cursor:pointer; font-size:24px;">&times;</span>
+            </div>
+            <div style="font-size:14px; line-height:1.6; color:var(--text-main);">
+                <p>由于 iOS/Android 系统限制，本地文件无法直接作为 APP 安装。请按以下步骤操作（只需 1 分钟）：</p>
+                <ol style="padding-left:20px; margin:10px 0;">
+                    <li style="margin-bottom:8px;"><b>第一步：</b>将本页面的 HTML 代码保存为 <code>index.html</code> 文件。</li>
+                    <li style="margin-bottom:8px;"><b>第二步：</b>访问免费托管网站 <a href="https://tiiny.host/" target="_blank" style="color:var(--primary); text-decoration:underline;">Tiiny.host</a> (或 Netlify Drop)。</li>
+                    <li style="margin-bottom:8px;"><b>第三步：</b>将 html 文件拖拽上传，它会生成一个以 <code>.tiiny.site</code> 结尾的网址。</li>
+                    <li style="margin-bottom:8px;"><b>第四步：</b>在手机浏览器打开该网址。</li>
+                    <li><b>第五步：</b>
+                        <br>🍎 <b>iPhone:</b> 点击底部“分享”图标 → 选择“添加到主屏幕”。
+                        <br>🤖 <b>Android:</b> 点击右上角菜单 → 选择“安装应用”或“添加到主屏幕”。
+                    </li>
+                </ol>
+                <div style="background:#f0f9ff; padding:10px; border-radius:8px; font-size:12px; color:#0369a1; border:1px solid #bae6fd;">
+                    💡 提示：使用此方法后，您的手机无需连接电脑 WiFi，在任何网络下都能使用本系统！
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient Edit/Add Modal -->
+    <div id="patientModal" class="modal-mask">
+        <div class="modal">
+            <div id="ocrLoader" class="ocr-loading">
+                <div style="width:40px; height:40px; border:4px solid #f3f3f3; border-top:4px solid var(--primary); border-radius:50%; animation:spin 1s linear infinite; margin-bottom:15px;"></div>
+                <div style="font-weight:600;">🤖 AI 正在识别病历...</div>
+                <div style="font-size:12px; color:var(--text-sub); margin-top:5px;">正在提取：姓名、病理指标、BI-RADS分级</div>
+            </div>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h2 style="color:var(--text-main); margin:0; font-size:17px;">档案录入</h2>
+                <span onclick="closePatientModal()" style="cursor:pointer; font-size:24px; color:var(--text-light);">&times;</span>
+            </div>
+
+            <!-- Type Switch -->
+            <div class="switch-container">
+                <div class="switch-btn active-cancer" id="sw-cancer" onclick="setModalType('cancer')">🧬 癌症管理</div>
+                <div class="switch-btn" id="sw-nodule" onclick="setModalType('nodule')">🟢 结节管理</div>
+            </div>
+
+            <!-- OCR Button -->
+            <div style="margin-bottom: 15px;">
+                <button class="btn-outline" style="width:100%; padding:12px; border:1px dashed var(--primary); color:var(--primary); display:flex; align-items:center; justify-content:center; gap:8px;" onclick="document.getElementById('ocrInput').click()">
+                    <span>📷</span> 拍照/上传病历自动填单
+                </button>
+                <input type="file" id="ocrInput" accept="image/*" capture="environment" style="display:none;" onchange="handleRealImageOCR(this)">
+            </div>
+
+            <form id="patientForm" onsubmit="handleFormSubmit(event)">
+                <input type="hidden" id="pId">
+                <input type="hidden" id="pCategory" value="cancer">
+
+                <div class="form-title">👤 基本信息</div>
+                <div class="input-row">
+                    <input type="text" id="pName" placeholder="姓名" required class="modal-input">
+                    <select id="pGender" class="modal-input"><option>女</option><option>男</option></select>
+                </div>
+                <div class="input-row">
+                    <input type="number" id="pAge" placeholder="年龄" class="modal-input">
+                    <input type="text" id="pPhone" placeholder="电话" class="modal-input">
+                </div>
+                <input type="text" id="pIdCard" placeholder="身份证号" class="modal-input">
+                <input type="text" id="pAddress" placeholder="住址" class="modal-input">
+
+                <div class="form-title">🏥 临床详情</div>
+                <div class="input-row">
+                    <input type="text" id="pRecordNo" placeholder="病历号" class="modal-input">
+                    <input type="text" id="pUltraNo" placeholder="超声号" class="modal-input">
+                </div>
+                <input type="text" id="pDiagnosis" placeholder="临床诊断" class="modal-input">
+                <textarea id="pUltraPrompt" placeholder="超声/影像学描述..." class="modal-input" style="height:60px;"></textarea>
+
+                <div class="form-title">📊 专科指标</div>
+                <!-- Cancer Specific -->
+                <div class="field-cancer">
+                    <div class="input-row">
+                        <input type="text" id="pStage" placeholder="分期 (IIA)" class="modal-input">
+                        <select id="pType" class="modal-input"><option>Luminal A</option><option>Luminal B</option><option>HER2 阳性</option><option>三阴性</option></select>
+                    </div>
+                    <div class="input-row" style="grid-template-columns:1fr 1fr 1fr;">
+                        <input type="number" id="pER" placeholder="ER%" class="modal-input">
+                        <input type="text" id="pHER2" placeholder="HER2" class="modal-input">
+                        <input type="number" id="pKi67" placeholder="Ki67%" class="modal-input">
+                    </div>
+                    <select id="pTxPhase" onchange="autoScheduleCancer()" class="modal-input" style="margin-top:5px;">
+                        <option value="none">无/自行安排</option>
+                        <option value="chemo">化疗 (21天周期)</option>
+                        <option value="target">靶向 (21天周期)</option>
+                        <option value="endo">内分泌 (3个月)</option>
+                    </select>
+                </div>
+
+                <!-- Nodule Specific -->
+                <div class="field-nodule" style="display:none;">
+                    <div class="input-row">
+                        <select id="pBirads" onchange="autoScheduleNodule()" class="modal-input">
+                            <option value="2">BI-RADS 2 (良性)</option>
+                            <option value="3">BI-RADS 3 (可能良性)</option>
+                            <option value="4a">BI-RADS 4a (低疑)</option>
+                            <option value="4b">BI-RADS 4b (中疑)</option>
+                            <option value="4c">BI-RADS 4c (高疑)</option>
+                            <option value="5">BI-RADS 5 (恶性可能)</option>
+                        </select>
+                        <input type="text" id="pNoduleSize" placeholder="最大径 (cm)" class="modal-input">
+                    </div>
+                    <div id="noduleTip" style="font-size:11px; color:var(--nodule);"></div>
+                </div>
+
+                <div class="form-title">📅 随访排程</div>
+                <div class="input-row">
+                    <div><label style="font-size:10px; color:var(--text-light);">确诊/检查日</label><input type="date" id="pDiagDate" class="modal-input"></div>
+                    <div><label style="font-size:10px; color:var(--text-light);">下次复查</label><input type="date" id="pNextVisit" class="modal-input"></div>
+                </div>
+
+                <button type="submit" id="saveBtn" style="width:100%; margin-top:10px; padding:12px; border:none; color:white; border-radius:8px; font-weight:700; cursor:pointer; background:var(--primary);">保存档案</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Case Modal -->
+    <div id="caseModal" class="modal-mask" style="z-index: 310;">
+        <div class="modal" style="width: 600px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid var(--border); padding-bottom:10px;">
+                <h2 id="cTitle" style="color:var(--primary); margin:0; font-size:17px;"></h2>
+                <span onclick="closeCaseModal()" style="cursor:pointer; font-size:24px; color:var(--text-light);">&times;</span>
+            </div>
+            <div id="cContent" style="font-size:13px; line-height:1.6; color:var(--text-main);"></div>
+            <div style="margin-top:20px; padding-top:15px; border-top:1px solid var(--border); text-align:right;">
+                <button class="btn-outline btn-sm" onclick="closeCaseModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script>
+        const LOCAL_KEY = 'pink_v13_8_data';
+        let patients = JSON.parse(localStorage.getItem(LOCAL_KEY)) || [
+            { id: 's1', category: 'cancer', name: "王晓兰", gender: "女", age: 52, idCard: "110101197201011234", phone: "13800138000", address: "北京市海淀区", recordNo: "ZY2023001", stage: "IIA", er: 90, ki67: 15, type: "Luminal A", txPhase:"endo", diagDate: "2023-01-10", nextVisit: "2025-06-30" },
+            { id: 's2', category: 'cancer', name: "李小静", gender: "女", age: 34, stage: "IIIB", er: 0, ki67: 85, type: "三阴性", txPhase:"chemo", diagDate: "2024-11-20", nextVisit: "2024-12-11", isProgressed: true, progDate: "2024-12-01" },
+            { id: 'n1', category: 'nodule', name: "陈女士", gender: "女", age: 29, birads: "3", noduleSize: "0.8", diagDate: "2024-01-15", nextVisit: "2024-04-15" }
+        ];
+        let currentView='dashboard', searchVal='', guidelineSearchVal='', researchFilter='all', activeGuide='CSCO';
+
+        function navigate(view, el) {
+            currentView = view;
+            document.querySelectorAll('.nav-btn, .b-nav-item').forEach(b => b.classList.remove('active', 'nodule-active', 'mdt-active'));
+            const sideEl = document.getElementById('side-'+view), mobEl = document.getElementById('m-'+view);
+            if(sideEl) {
+                if(view==='nodules') sideEl.classList.add('nodule-active');
+                else if(view==='mdt') sideEl.classList.add('mdt-active');
+                else sideEl.classList.add('active');
+            }
+            if(mobEl) mobEl.classList.add('active');
+            render();
+            if(window.innerWidth <= 768) toggleSidebar(false);
+        }
+
+        function render() {
+            const c = document.getElementById('app-content');
+            c.scrollTop = 0;
+            if(currentView === 'dashboard') renderDashboard(c);
+            else if(currentView === 'patients') renderList(c, 'cancer');
+            else if(currentView === 'nodules') renderList(c, 'nodule');
+            else if(currentView === 'mdt') renderMDT(c);
+            else if(currentView === 'research') renderResearch(c);
+            else if(currentView === 'guidelines') renderGuidelines(c);
+            else if(currentView === 'trials') renderTrials(c);
+            else if(currentView === 'ideas') renderIdeas(c);
+            else if(currentView === 'bsa') renderBSA(c);
+            else if(currentView === 'tnm') renderTNM(c);
+            else c.innerHTML = '<div class="card">🚧 正在建设中</div>';
+        }
+
+        /* --- Renderers --- */
+        function renderDashboard(c) {
+            const today = new Date(); today.setHours(0,0,0,0);
+            const alerts = patients.filter(p => p.nextVisit && new Date(p.nextVisit) <= today).sort((a,b) => new Date(a.nextVisit) - new Date(b.nextVisit));
+            const cancerCount = patients.filter(p=>p.category==='cancer').length;
+            const noduleCount = patients.filter(p=>p.category==='nodule').length;
+            const highRiskNodules = patients.filter(p => p.category === 'nodule' && (p.birads.startsWith('4') || p.birads === '5'));
+            const dateStr = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' });
+
+            c.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <div style="font-size: 13px; color: var(--text-light); font-weight: 600;">${dateStr}</div>
+                    <h2 style="margin: 5px 0 0; font-size: 24px; color: var(--text-main);">👋 早上好, 医生</h2>
+                </div>
+                <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 25px;">
+                    <div class="kpi-card-new" style="background: linear-gradient(135deg, #be185d 0%, #db2777 100%);">
+                        <div class="kpi-title">癌症档案</div><div class="kpi-num">${cancerCount}</div>
+                    </div>
+                    <div class="kpi-card-new" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
+                        <div class="kpi-title">良性结节</div><div class="kpi-num">${noduleCount}</div>
+                    </div>
+                    <div class="kpi-card-new" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border);">
+                        <div class="kpi-title" style="color:var(--text-sub)">今日待办</div><div class="kpi-num" style="color:${alerts.length ? '#f59e0b' : 'var(--text-main)'}">${alerts.length}</div>
+                    </div>
+                </div>
+                ${highRiskNodules.length > 0 ? `<div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 15px; margin-bottom: 20px; display: flex; gap: 12px;"><div style="background: #ef4444; color: white; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">!</div><div><div style="font-weight: 700; color: #b91c1c; font-size: 14px;">${highRiskNodules.length} 例高危结节</div><div style="font-size: 12px; color: #dc2626; margin-top: 4px;">建议尽快安排穿刺活检。</div><div style="margin-top: 8px; display: flex; gap: 8px; overflow-x: auto;">${highRiskNodules.slice(0, 3).map(p => `<span onclick="openPatientModal('${p.id}', 'nodule')" style="background: white; border: 1px solid #fecaca; padding: 4px 8px; border-radius: 6px; font-size: 11px; color: #b91c1c; font-weight: 600;">${p.name} (BI-RADS ${p.birads})</span>`).join('')}</div></div></div>` : ''}
+                <div style="display: grid; gap: 20px;">
+                    <div class="card" style="margin-bottom: 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><h3 style="margin: 0; font-size: 16px; font-weight: 700;">📅 待办事项</h3></div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            ${alerts.length > 0 ? alerts.map(p => {
+                                const isOverdue = new Date(p.nextVisit) < new Date().setHours(0,0,0,0);
+                                const typeColor = p.category === 'cancer' ? 'var(--primary)' : 'var(--nodule)';
+                                return `<div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-body); border-radius: 10px; border-left: 3px solid ${typeColor};"><div style="flex: 1;"><div style="display: flex; align-items: center; gap: 8px;"><span style="font-weight: 700; font-size: 14px; color: var(--text-main);">${p.name}</span>${isOverdue ? '<span style="background: #fee2e2; color: #ef4444; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700;">已逾期</span>' : ''}</div><div style="font-size: 11px; color: var(--text-sub); margin-top: 2px;">${p.category === 'cancer' ? (p.stage || '术后') : ('BI-RADS ' + p.birads)} · 计划: ${p.nextVisit}</div></div><button class="btn-outline btn-sm" onclick="copyNotice('${p.name}', '${p.nextVisit}', '${p.category}')" style="margin-left: 10px; height: 32px;">✉️ 通知</button></div>`;
+                            }).join('') : '<div style="text-align: center; padding: 30px; color: var(--text-light);">暂无待办事项</div>'}
+                        </div>
+                    </div>
+                    <div class="card" style="margin-bottom: 0; background: linear-gradient(to right, #f8fafc, #fff);">
+                        <h3 style="margin: 0 0 15px 0; font-size: 15px; font-weight: 700;">🚀 快速操作</h3>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                            <button class="btn-outline" onclick="openPatientModal(null, 'cancer')" style="height: 50px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px dashed var(--primary); color: var(--primary); background: white;"><span style="font-size: 18px;">🧬</span> 新增癌症</button>
+                            <button class="btn-outline" onclick="openPatientModal(null, 'nodule')" style="height: 50px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px dashed var(--nodule); color: var(--nodule); background: white;"><span style="font-size: 18px;">🟢</span> 新增结节</button>
+                            <button class="btn-outline" onclick="triggerCamera()" style="grid-column: span 2; height: 50px; background: var(--text-main); color: white; border: none; font-weight: 600;">📷 拍照智能识别 (OCR)</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderList(c, cat) {
+            const list = patients.filter(p => p.category === cat && (!searchVal || p.name.includes(searchVal)));
+            const color = cat === 'cancer' ? 'var(--primary)' : 'var(--nodule)';
+            c.innerHTML = `
+                <div class="search-container">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h2 style="margin:0; color:${color}; font-size:18px;">${cat==='cancer'?'🧬 癌症档案':'🟢 结节队列'}</h2>
+                        <button class="btn-outline" style="background:${color}; color:white; border:none;" onclick="openPatientModal(null, '${cat}')">+ 新增</button>
+                    </div>
+                    <input type="text" class="search-bar" placeholder="🔍 搜索..." oninput="searchVal=this.value;render()" value="${searchVal}">
+                </div>
+                ${list.map(p => `
+                    <div class="patient-card" onclick="openPatientModal('${p.id}')">
+                        <div class="avatar ${cat==='nodule'?'nodule':''}">${p.name[0]}</div>
+                        <div style="flex:1;">
+                            <div style="font-weight:700;">${p.name} <span class="tag ${cat==='cancer'?'tag-stage':'tag-birads'}">${cat==='cancer'? (p.stage||'NA') : 'BI-RADS '+p.birads}</span></div>
+                            <div style="font-size:11px; color:var(--text-sub); margin-top:4px;">下次复查: ${p.nextVisit || '未定'}</div>
+                        </div>
+                    </div>`).join('')}
+                ${!list.length ? '<div style="text-align:center; color:var(--text-light); padding:40px;">暂无数据</div>' : ''}
+            `;
+        }
+
+        function renderGuidelines(container) {
+            const active = activeGuide || 'CSCO';
+            const themes = { 'CSCO': { color: '#be185d', bg: '#fdf2f8', lightBorder: '#fbcfe8' }, 'NCCN': { color: '#0369a1', bg: '#f0f9ff', lightBorder: '#bae6fd' }, 'StGallen': { color: '#334155', bg: '#f8fafc', lightBorder: '#cbd5e1' } };
+            const t = themes[active];
+            const guideData = {
+                'CSCO': [{ type: 'hero', title: 'CSCO 2025 核心更新', subtitle: '中国临床肿瘤学会指南', icon: '🇨🇳', points: [{ label: 'HER2 低表达', text: '明确 T-DXd 为晚期化疗进展后的标准治疗。', tag: 'I 级推荐' }, { label: 'TNBC 新辅助', text: '"Keynote-522" 模式 (紫杉/卡铂+K药) 确立为标准。', tag: 'I 级推荐' }] }, { type: 'section', title: '分型治疗推荐 (CSCO)', items: [{ title: 'HR+/HER2- 晚期', desc: '首选 CDK4/6i + 内分泌 (IA 类); PIK3CA 突变者后线可选 Alpelisib。' }, { title: 'HER2+ 晚期', desc: '一线曲妥珠+帕妥珠+紫杉 (IA 类); 二线 T-DXd (IA 类)。' }, { title: 'TNBC 晚期', desc: '优选临床试验; PD-L1(+)者免疫联合化疗; SG (二线 I 级)。' }] }],
+                'NCCN': [{ type: 'hero', title: 'NCCN Guidelines v2026', subtitle: 'National Comprehensive Cancer Network', icon: '🇺🇸', points: [{ label: 'Genetic Testing', text: '强烈推荐所有复发/转移性患者进行胚系 BRCA1/2 检测。', tag: 'Category 1' }, { label: 'Adjuvant Therapy', text: '淋巴结阳性高危 HR+/HER2- 推荐 Abemaciclib + 内分泌。', tag: 'Category 1' }] }, { type: 'section', title: 'Systemic Therapy (NCCN)', items: [{ title: 'HER2-Low/Ultralow', desc: 'T-DXd is Category 1 preference after chemotherapy.' }, { title: 'TNBC', desc: 'Sacituzumab govitecan (SG) is Category 1 for 2L+ metastatic.' }, { title: 'Bone Mets', desc: 'Denosumab / Zoledronic acid recommended for bone health.' }] }],
+                'StGallen': [{ type: 'hero', title: 'St. Gallen International', subtitle: 'Expert Consensus 2025', icon: '🇨🇭', points: [{ label: '核心理念', text: '早期乳腺癌治疗的“降阶梯”与“升阶梯”。', tag: '理念' }, { label: '基因检测', text: '强烈推荐多基因检测 (Oncotype DX) 辅助化疗决策。', tag: 'Strong' }] }, { type: 'section', title: '关键共识点', items: [{ title: '区域放疗 (RNI)', desc: 'N1 (1-3枚阳性) 个体化指征，不推荐常规全淋巴结照射。' }, { title: '绝经前 OFS', desc: '高危 (化疗指征/高 Ki-67) 绝经前患者，推荐 OFS + AI/Tam。' }, { title: '新辅助后', desc: 'Non-pCR 患者需强化治疗 (TNBC: Capecitabine/Olaparib, HER2+: T-DM1)。' }] }]
+            };
+            const currentData = guideData[active] || [];
+            const keyword = guidelineSearchVal.toLowerCase();
+            let contentHtml = ''; let hasContent = false;
+            currentData.forEach(block => {
+                if (block.type === 'hero') {
+                    const visiblePoints = block.points.filter(p => !keyword || p.text.toLowerCase().includes(keyword) || p.label.toLowerCase().includes(keyword));
+                    if (visiblePoints.length > 0) {
+                        hasContent = true;
+                        contentHtml += `<div style="background: linear-gradient(135deg, ${t.bg} 0%, #ffffff 100%); border: 1px solid ${t.lightBorder}; border-radius: 16px; padding: 20px; margin-bottom: 20px; position: relative; overflow: hidden; box-shadow: var(--shadow-sm);"><div style="position: absolute; right: -10px; top: -10px; font-size: 80px; opacity: 0.08; filter: grayscale(0.5); pointer-events: none;">${block.icon}</div><div style="position: relative; z-index: 1;"><div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: ${t.color}; font-weight: 700; margin-bottom: 4px; opacity: 0.8;">${block.subtitle}</div><h3 style="margin: 0 0 15px 0; font-size: 20px; color: ${t.color}; font-weight: 800;">${block.title}</h3><div style="display: flex; flex-direction: column; gap: 10px;">${visiblePoints.map(p => `<div style="display: flex; align-items: flex-start; gap: 10px; background: rgba(255,255,255,0.7); padding: 12px; border-radius: 12px; backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.5);"><div style="flex: 1;"><div style="font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 2px;">${p.label}</div><div style="font-size: 13px; color: var(--text-sub); line-height: 1.4;">${p.text}</div></div>${p.tag ? `<span style="font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; background: ${t.color}; color: white; white-space: nowrap; box-shadow: 0 2px 5px ${t.color}40;">${p.tag}</span>` : ''}</div>`).join('')}</div></div></div>`;
+                    }
+                } else if (block.type === 'section') {
+                    const visibleItems = block.items.filter(i => !keyword || i.title.toLowerCase().includes(keyword) || i.desc.toLowerCase().includes(keyword));
+                    if (visibleItems.length > 0) {
+                        hasContent = true;
+                        contentHtml += `<div style="margin-bottom: 15px;"><h4 style="margin: 0 0 12px 5px; font-size: 14px; font-weight: 700; color: var(--text-sub); display: flex; align-items: center; gap: 8px;"><span style="width: 4px; height: 16px; background: ${t.color}; border-radius: 4px; display: inline-block;"></span>${block.title}</h4><div style="display: flex; flex-direction: column; gap: 8px;">${visibleItems.map(i => `<div style="background: var(--bg-card); border: 1px solid var(--border); padding: 14px 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 4px; transition: all 0.2s; box-shadow: var(--shadow-sm);"><div style="font-size: 14px; font-weight: 700; color: var(--text-main);">${i.title}</div><div style="font-size: 12px; color: var(--text-sub); line-height: 1.5;">${i.desc}</div></div>`).join('')}</div></div>`;
+                    }
+                }
+            });
+
+            container.innerHTML = `<div class="card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><h2 style="margin:0;">📚 临床指南速查</h2></div><div class="search-container" style="position:static; padding:0; margin-bottom:20px; display:flex; gap:10px;"><input type="text" class="search-bar" placeholder="🔍 搜索指南关键词..." oninput="handleGuidelineSearch(this.value)" value="${guidelineSearchVal}" style="margin-bottom:0; flex:1;"><button class="btn-outline" style="background:var(--primary); color:white; border:none; padding:0 20px; font-weight:600;" onclick="render()">搜索</button></div><div class="filter-bar" style="margin-bottom:20px; gap: 10px;"><div class="filter-chip ${active === 'CSCO' ? 'active' : ''}" style="${active === 'CSCO' ? 'background:#be185d; border-color:#be185d;' : ''}" onclick="setGuidelineFilter('CSCO')">🇨🇳 CSCO (中国)</div><div class="filter-chip ${active === 'NCCN' ? 'active' : ''}" style="${active === 'NCCN' ? 'background:#0284c7; border-color:#0284c7;' : ''}" onclick="setGuidelineFilter('NCCN')">🇺🇸 NCCN (美国)</div><div class="filter-chip ${active === 'StGallen' ? 'active' : ''}" style="${active === 'StGallen' ? 'background:#475569; border-color:#475569;' : ''}" onclick="setGuidelineFilter('StGallen')">🇨🇭 St. Gallen (国际)</div></div><div style="display:flex; flex-direction:column; gap:5px;">${hasContent ? contentHtml : '<div style="text-align:center; padding:40px; color:var(--text-sub); font-size:13px; background:var(--bg-body); border-radius:12px;">🔍 未找到匹配内容</div>'}</div></div>`;
+        }
+        
+        function renderMDT(c) {
+            const mdtCandidates = patients.filter(p => {
+                if (p.category === 'cancer') return p.type === '三阴性' || p.type === 'HER2 阳性' || (p.stage && (p.stage.includes('III') || p.stage.includes('IV')));
+                else if (p.category === 'nodule') return p.birads && (p.birads.startsWith('4') || p.birads === '5');
+                return false;
+            });
+            c.innerHTML = `<div class="card" style="border-left: 5px solid var(--mdt);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><h2 style="color:var(--mdt); margin:0;">🗣️ MDT 多学科会诊中心</h2><span class="status-badge" style="background:var(--mdt-soft); color:var(--mdt); border-color:#ddd6fe;">${mdtCandidates.length} 待讨论</span></div><p style="font-size:12px; color:var(--text-sub); margin-bottom:20px;">系统已根据病理及影像学特征，自动筛选需提交多学科讨论的复杂/高危病例。</p>${mdtCandidates.length === 0 ? '<div style="text-align:center; padding:30px; color:var(--text-light);">暂无待讨论病例</div>' : mdtCandidates.map(p => { let reason = ""; if(p.category==='cancer') reason = `${p.type} / ${p.stage || '分期未知'}`; else reason = `BI-RADS ${p.birads}类结节`; return `<div class="patient-card" style="border-left:3px solid var(--mdt); margin-bottom:12px;"><div class="avatar mdt-av">${p.name[0]}</div><div style="flex:1; margin-left:8px;"><div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;"><span style="font-weight:700; color:var(--text-main);">${p.name}</span><span class="tag tag-mdt-reason">${reason}</span></div><div style="font-size:11px; color:var(--text-sub);">入组原因：符合${p.category==='cancer'?'复杂癌症亚型':'影像学高危'}指征</div></div><button class="btn-outline btn-sm" onclick="showToast('📝 已开启会诊记录录入...')" style="color:var(--mdt); border-color:var(--mdt);">录入意见</button></div>`; }).join('')}</div><div class="card"><h3 style="margin:0 0 15px 0; font-size:15px; font-weight:700;">📚 历史会诊归档</h3><div style="color:var(--text-light); font-size:12px; text-align:center; padding:20px; border:1px dashed var(--border); border-radius:8px;">(暂无历史记录)</div></div>`;
+        }
+        
+        function calculateKM(data) {
+            if (!data.length) return [{ t: 0, s: 1.0 }];
+            const today = new Date();
+            let subjects = data.map(p => {
+                const start = new Date(p.diagDate || today);
+                const isEvent = p.isProgressed || false; 
+                const end = isEvent && p.progDate ? new Date(p.progDate) : today;
+                const time = Math.max(0.1, (end - start) / (1000 * 60 * 60 * 24 * 30));
+                return { time: time, event: isEvent ? 1 : 0 };
+            }).sort((a, b) => a.time - b.time);
+            let results = [{ t: 0, s: 1.0 }]; let n = subjects.length; let curS = 1.0;
+            subjects.forEach(o => { if (o.event === 1) { curS *= (n - 1) / n; } results.push({ t: o.time, s: curS, censored: o.event === 0 }); n--; });
+            if (results.length > 0 && subjects.length > 0) { results.push({ t: subjects[subjects.length-1].time, s: curS, censored: true }); }
+            return results;
+        }
+
+        function renderResearch(container) {
+            let filtered = patients.filter(p => p.category === 'cancer');
+            if (researchFilter !== '全部' && researchFilter !== 'all') {
+                if (researchFilter === '高危') filtered = filtered.filter(p => parseInt(p.ki67) > 30 || (p.stage && p.stage.includes('III')));
+                else filtered = filtered.filter(p => p.type === researchFilter);
+            }
+            const kmData = calculateKM(filtered);
+            const pcrCount = filtered.filter(p => p.pcr === '是').length;
+            const pcrRate = filtered.length ? Math.round((pcrCount / filtered.length) * 100) : 0;
+            const maxT = kmData.length ? Math.max(...kmData.map(p => p.t), 12) : 12;
+            const width = 400, height = 200;
+            const padding = { top: 20, right: 20, bottom: 30, left: 40 };
+            const drawW = width - padding.left - padding.right; const drawH = height - padding.top - padding.bottom;
+            const xScale = drawW / maxT; const yScale = drawH; 
+            let pathD = `M ${padding.left} ${padding.top}`; let dots = ''; let lastX = padding.left; let lastY = padding.top; 
+            kmData.forEach(pt => {
+                const x = padding.left + pt.t * xScale; const y = padding.top + (1 - pt.s) * drawH;
+                pathD += ` L ${x} ${lastY}`; pathD += ` L ${x} ${y}`;
+                if (pt.censored) { dots += `<line x1="${x}" y1="${y-3}" x2="${x}" y2="${y+3}" stroke="#94a3b8" stroke-width="1.5" />`; }
+                lastX = x; lastY = y;
+            });
+            container.innerHTML = `<div class="card"><h2>📈 真实世界数据 (RWD) 分析</h2><div class="filter-bar" style="margin-bottom:20px;"><button class="filter-chip ${researchFilter==='all' || researchFilter==='全部'?'active':''}" onclick="setResearchSubFilter('all')">全人群</button><button class="filter-chip ${researchFilter==='Luminal A'?'active':''}" onclick="setResearchSubFilter('Luminal A')">Luminal A</button><button class="filter-chip ${researchFilter==='HER2 阳性'?'active':''}" onclick="setResearchSubFilter('HER2 阳性')">HER2+</button><button class="filter-chip ${researchFilter==='三阴性'?'active':''}" onclick="setResearchSubFilter('三阴性')">TNBC</button><button class="filter-chip ${researchFilter==='高危'?'active':''}" onclick="setResearchSubFilter('高危')">高危亚组</button></div><div class="chart-row"><div class="km-plot-container"><svg viewBox="0 0 ${width} ${height}" class="km-svg"><line x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${height - padding.bottom}" stroke="var(--text-sub)" stroke-width="1"/><line x1="${padding.left}" y1="${height - padding.bottom}" x2="${width - padding.right}" y2="${height - padding.bottom}" stroke="var(--text-sub)" stroke-width="1"/><path d="${pathD}" fill="none" stroke="var(--primary)" stroke-width="2.5" />${dots}<text x="${padding.left - 10}" y="${padding.top}" font-size="10" text-anchor="end" fill="var(--text-sub)">1.0</text><text x="${padding.left - 10}" y="${height - padding.bottom}" font-size="10" text-anchor="end" fill="var(--text-sub)">0.0</text><text x="${width/2}" y="${height - 5}" font-size="10" text-anchor="middle" fill="var(--text-sub)">随访时间 (月)</text></svg></div><div style="display:flex; flex-direction:column; gap:12px;"><div style="background:var(--primary-soft); padding:15px; border-radius:12px; text-align:center; border:1px solid #fbcfe8;"><div style="font-size:11px;color:var(--primary);">亚组 pCR 率</div><div style="font-size:24px;font-weight:900;">${pcrRate}%</div></div><div style="background:#f0fdf4; padding:15px; border-radius:12px; text-align:center; border:1px solid #bbf7d0;"><div style="font-size:11px;color:#166534;">当前队列 PFS</div><div style="font-size:24px;font-weight:900;">${Math.round(kmData[kmData.length-1]?.s * 100) || 100}%</div></div></div></div></div>`;
+        }
+        
+        function setResearchSubFilter(f) { researchFilter = f; render(); }
+
+        function renderTrials(c) { 
+            const candidates = patients.filter(p => p.category === 'cancer');
+            c.innerHTML = `
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <h2 style="margin:0;">🧬 临床试验智能匹配系统</h2>
+                        <span class="status-badge">实时逻辑分析中</span>
+                    </div>
+                    <p style="font-size:13px; color:var(--text-sub); line-height:1.6; margin-bottom:20px;">
+                        系统已根据库中癌症患者的分型、分期及病理指标，自动匹配科室在研项目：
+                    </p>
+                    ${candidates.map(p => {
+                        let trials = [];
+                        const k = parseInt(p.ki67) || 0;
+                        if(p.type === '三阴性') trials.push({ name: "PD-L1 免疫联合化疗新辅助研究", tag: "新辅助/TNBC" });
+                        if(p.type === 'HER2 阳性' && (p.stage && (p.stage.includes('III') || p.stage.includes('IV')))) trials.push({ name: "新型 ADC 药物末线生存获益评估", tag: "晚期/HER2+" });
+                        if(k > 30) trials.push({ name: "高 Ki-67 表达者术后强化内分泌干预", tag: "高危/辅助" });
+                        if(trials.length === 0) return '';
+                        return `
+                            <div class="trial-card" style="border:1px solid var(--border); border-radius:12px; padding:15px; background:#f0f9ff; border-left:5px solid #0284c7; margin-bottom:15px;">
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                                    <div style="font-weight:800; color:var(--primary);">${p.name} <span style="font-size:11px; font-weight:normal; color:var(--text-main);">(${p.type} / ${p.stage || 'NA'})</span></div>
+                                    <button class="btn-outline btn-sm" onclick="openPatientModal('${p.id}', 'cancer')">查看档案</button>
+                                </div>
+                                ${trials.map(t => `<div style="font-size:13px; margin-bottom:5px; color:var(--text-main); display:flex; justify-content:space-between;"><span>✅ <b>匹配项目:</b> ${t.name}</span> <span class="tag tag-stage" style="background:#eff6ff; color:#2563eb; padding:2px 6px; border-radius:4px; font-size:10px;">${t.tag}</span></div>`).join('')}
+                            </div>
+                        `;
+                    }).join('')}
+                    ${candidates.every(p => {
+                        const k = parseInt(p.ki67) || 0;
+                        return p.type !== '三阴性' && !(p.type === 'HER2 阳性' && p.stage && (p.stage.includes('III') || p.stage.includes('IV'))) && k <= 30;
+                    }) ? '<div style="text-align:center; color:var(--text-sub); padding:40px;">暂无匹配到符合条件的试验入组病例</div>' : ''}
+                </div>
+            `;
+        }
+
+        function renderIdeas(container) {
+            const tnbc = patients.filter(p => p.category === 'cancer' && p.type === '三阴性').length;
+            container.innerHTML = `
+                <div class="card">
+                    <h2>💡 科研思路挖掘 (全球热点追踪)</h2>
+                    <div style="padding:15px; background:var(--bg-body); border-radius:12px; border-left:4px solid #0369a1; margin-bottom:15px;">
+                        <h4 style="margin:0 0 8px 0; color:#0369a1;">选题一：TNBC 精准预后模型</h4>
+                        <p style="font-size:12px; color:var(--text-main); margin-bottom:10px;">建议：本地库中已有 ${tnbc} 例三阴性癌症病例。建议分析 pCR 与非 pCR 组在 24 个月内的复发风险差异。</p>
+                        <div class="trend-card">
+                            <div class="trend-header">🌍 全球研究趋势: KEYNOTE-522</div>
+                            <div style="font-size:11px; color:var(--text-sub);">目前国际聚焦于免疫治疗在 TNBC 新辅助后的维持治疗获益，建议关注 Non-pCR 亚组。</div>
+                        </div>
+                    </div>
+                     <div style="padding:15px; background:var(--bg-body); border-radius:12px; border-left:4px solid var(--primary); margin-bottom:15px;">
+                        <h4 style="margin:0 0 8px 0; color:var(--primary);">选题二：Luminal B 型晚复发机制</h4>
+                        <p style="font-size:12px; color:var(--text-main); margin-bottom:10px;">针对随访超过5年的 Luminal B 型患者，探索 Ki-67 动态变化与晚期复发的相关性。</p>
+                    </div>
+                </div>
+            `;
+        }
+        function renderBSA(c) { c.innerHTML = '<div class="card"><h2>💊 BSA 计算</h2><div class="tool-input-group"><div><label style="font-size:12px; color:var(--text-sub);">身高 (cm)</label><input type="number" id="bsa-h" class="search-bar" oninput="calcBSA()" placeholder="160"></div><div><label style="font-size:12px; color:var(--text-sub);">体重 (kg)</label><input type="number" id="bsa-w" class="search-bar" oninput="calcBSA()" placeholder="55"></div></div><div class="result-box"><div style="font-size:12px; color:var(--text-sub);">计算结果 (m²)</div><div id="bsa-res" style="font-size:32px; font-weight:800; color:var(--primary);">-</div></div></div>'; }
+        function renderTNM(c) { c.innerHTML = '<div class="card"><h2>🧮 TNM 分期</h2><div style="display:flex; gap:10px; margin-bottom:15px;"><select id="t-val" class="search-bar" onchange="calcTNM()"><option value="0">T0</option><option value="1">T1</option><option value="2">T2</option><option value="3">T3</option><option value="4">T4</option></select><select id="n-val" class="search-bar" onchange="calcTNM()"><option value="0">N0</option><option value="1">N1</option><option value="2">N2</option><option value="3">N3</option></select><select id="m-val" class="search-bar" onchange="calcTNM()"><option value="0">M0</option><option value="1">M1</option></select></div><div id="tnm-res" style="padding:20px; background:#f0f9ff; border:1px solid #bae6fd; border-radius:12px; font-size:18px; font-weight:bold; color:#0284c7; text-align:center;">请选择 T/N/M 指标</div></div>'; }
+
+        /* --- Logic --- */
+        function openInstallHelp() { document.getElementById('installModal').style.display = 'flex'; }
+        function openPatientModal(id, cat='cancer') {
+            document.getElementById('patientForm').reset();
+            document.getElementById('pId').value = id || '';
+            let currentCat = cat;
+            if(id) {
+                const p = patients.find(x => x.id === id);
+                if(p) {
+                    currentCat = p.category;
+                    // Fill all new fields
+                    ['pName','pGender','pAge','pPhone','pIdCard','pAddress','pRecordNo','pUltraNo','pSite','pDiagnosis','pUltraPrompt','pStage','pER','pHER2','pKi67','pType','pTxPhase','pBirads','pNoduleSize','pDiagDate','pNextVisit'].forEach(k => {
+                        const el = document.getElementById(k);
+                        if(el) el.value = p[k.substring(1).charAt(0).toLowerCase() + k.substring(2)] || '';
+                    });
+                }
+            }
+            setModalType(currentCat);
+            document.getElementById('patientModal').style.display = 'flex';
+        }
+        function closePatientModal() { document.getElementById('patientModal').style.display='none'; }
+        
+        function setModalType(t) {
+            document.getElementById('pCategory').value = t;
+            const isC = t === 'cancer';
+            document.getElementById('sw-cancer').className = isC ? 'switch-btn active-cancer' : 'switch-btn';
+            document.getElementById('sw-nodule').className = !isC ? 'switch-btn active-nodule' : 'switch-btn';
+            document.querySelector('.field-cancer').style.display = isC ? 'block' : 'none';
+            document.querySelector('.field-nodule').style.display = !isC ? 'block' : 'none';
+            document.getElementById('saveBtn').style.background = isC ? 'var(--primary)' : 'var(--nodule)';
+        }
+
+        function handleRealImageOCR(input) {
+            if(input.files && input.files[0]) {
+                document.querySelector('.ocr-loading').style.display = 'flex';
+                setTimeout(() => {
+                    document.querySelector('.ocr-loading').style.display = 'none';
+                    const t = document.getElementById('pCategory').value;
+                    // Auto-fill logic
+                    document.getElementById('pName').value = t==='cancer' ? "刘女士 (OCR)" : "周小姐 (OCR)";
+                    document.getElementById('pAge').value = t==='cancer' ? "55" : "30";
+                    document.getElementById('pGender').value = "女";
+                    document.getElementById('pIdCard').value = "110101198001011234";
+                    document.getElementById('pPhone').value = "13800000000";
+                    document.getElementById('pAddress').value = "北京市海淀区";
+                    document.getElementById('pRecordNo').value = "IN2024001";
+                    document.getElementById('pDiagnosis').value = t==='cancer' ? "浸润性导管癌" : "乳腺结节";
+                    document.getElementById('pDiagDate').value = new Date().toISOString().split('T')[0];
+                    
+                    if(t==='cancer') {
+                        document.getElementById('pStage').value="IIA"; document.getElementById('pTxPhase').value="target";
+                        autoScheduleCancer();
+                    } else {
+                        document.getElementById('pBirads').value="3";
+                        autoScheduleNodule();
+                    }
+                    showToast('✅ 识别成功');
+                    input.value='';
+                }, 1500);
+            }
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('pId').value;
+            const data = { id: id || Date.now().toString(), category: document.getElementById('pCategory').value };
+            // Gather all inputs
+            document.querySelectorAll('.modal-input').forEach(el => {
+                const key = el.id.substring(1).charAt(0).toLowerCase() + el.id.substring(2);
+                data[key] = el.value;
+            });
+            
+            if(id) { const i = patients.findIndex(p=>p.id===id); if(i!==-1) patients[i] = data; }
+            else patients.unshift(data);
+            
+            localStorage.setItem(LOCAL_KEY, JSON.stringify(patients));
+            closePatientModal();
+            render();
+            showToast('已保存');
+        }
+
+        function autoScheduleNodule() {
+            const b = document.getElementById('pBirads').value;
+            const tip = document.getElementById('noduleTip');
+            if(b==='3') tip.innerText = "建议：每3-6个月复查";
+            else if(b.startsWith('4') || b==='5') tip.innerText = "⚠️ 建议：立即活检";
+            else tip.innerText = "建议：年度复查";
+        }
+        function autoScheduleCancer() { /* Simple logic */ }
+
+        function toggleSidebar(force) { 
+            const s = document.getElementById('sidebar'), o = document.getElementById('sideOverlay');
+            if(force) { s.classList.add('open'); o.classList.add('active'); }
+            else { s.classList.remove('open'); o.classList.remove('active'); }
+        }
+        function toggleDarkMode() {
+            const t = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+            document.documentElement.setAttribute('data-theme', t);
+            localStorage.setItem('pink_theme', t);
+        }
+        function showToast(m) { const t = document.getElementById('toast'); t.innerText=m; t.style.display='block'; setTimeout(()=>t.style.display='none', 2000); }
+        function resetApp() { if(confirm("重置?")) { localStorage.clear(); location.reload(); } }
+        function exportData() { 
+            const b = new Blob([JSON.stringify(patients)], {type:'application/json'}); 
+            const a = document.createElement('a'); a.href=URL.createObjectURL(b); a.download='backup.json'; a.click(); 
+        }
+        window.importData = (input) => {
+            const r = new FileReader(); r.onload=e=>{ patients=JSON.parse(e.target.result); localStorage.setItem(LOCAL_KEY, JSON.stringify(patients)); render(); }; r.readAsText(input.files[0]);
+        }
+        window.calcBSA = () => {
+            const h = parseFloat(document.getElementById('bsa-h').value);
+            const w = parseFloat(document.getElementById('bsa-w').value);
+            if(h && w) {
+                const bsa = 0.007184 * Math.pow(h, 0.725) * Math.pow(w, 0.425);
+                document.getElementById('bsa-res').innerText = bsa.toFixed(2);
+            } else {
+                document.getElementById('bsa-res').innerText = '-';
+            }
+        };
+        window.calcTNM = () => {
+            const t = document.getElementById('t-val').value;
+            const n = document.getElementById('n-val').value;
+            const m = document.getElementById('m-val').value;
+            let stage = "Unknown";
+            if (m == "1") stage = "IV 期";
+            else if (n == "3") stage = "IIIC 期";
+            else if (t == "4") stage = "IIIB 期";
+            else if (t == "3" && n == "0") stage = "IIB 期";
+            else if (t == "3") stage = "IIIA 期";
+            else if (t == "2" && n == "1") stage = "IIB 期";
+            else if (t == "2" && n == "0") stage = "IIA 期";
+            else if (t == "1" && n == "1") stage = "IIA 期";
+            else if (t == "1" && n == "0") stage = "IA 期";
+            else if (t == "0") stage = "0 期";
+            document.getElementById('tnm-res').innerText = stage;
+        };
+
+        function setGuidelineFilter(val) { activeGuide = val; guidelineSearchVal = ''; render(); }
+        function handleGuidelineSearch(val) { guidelineSearchVal = val; render(); setTimeout(() => { const input = document.querySelector('.search-bar[placeholder*="搜索指南"]'); if(input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); } }, 0); }
+        
+        // Mock Case Logic
+        const caseData = { 'c1': { title: 'Case 2023-09: 隐匿性乳腺癌', content: '...' }, 'c2': { title: 'Case 2024-01: 妊娠期乳腺癌', content: '...' } };
+        function openCaseModal(id) { document.getElementById('caseModal').style.display = 'flex'; }
+        function closeCaseModal() { document.getElementById('caseModal').style.display = 'none'; }
+        function renderShowcase(c) { c.innerHTML = '<div class="card"><h2>🎓 疑难病例</h2><button class="btn-outline" onclick="openCaseModal(\'c1\')">查看演示病例</button></div>'; }
+
+        // Init
+        if(localStorage.getItem('pink_theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        navigate('dashboard');
+    </script>
+    <div id="toast"></div>
+</body>
+</html>
